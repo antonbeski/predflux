@@ -9,6 +9,32 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 
+const FormattedDate = ({ dateString }: { dateString: string }) => {
+  const [formattedDate, setFormattedDate] = useState('');
+
+  useEffect(() => {
+    if (dateString) {
+      try {
+        const date = new Date(dateString);
+        setFormattedDate(
+          date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+        );
+      } catch (e) {
+        setFormattedDate(dateString);
+      }
+    }
+  }, [dateString]);
+
+  return <>{formattedDate || '...'}</>;
+};
+
+
 export function NewsList({ initialNews }: { initialNews: NewsItem[] }) {
   const [news, setNews] = useState<NewsItem[]>(initialNews);
   const [page, setPage] = useState(2);
@@ -52,23 +78,6 @@ export function NewsList({ initialNews }: { initialNews: NewsItem[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, isLoading, page]);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Just now';
-    try {
-      const date = new Date(dateString);
-      // Using a consistent format helps prevent hydration issues
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-    } catch (e) {
-      return dateString;
-    }
-  }
-
   return (
     <Card>
       <CardContent className="p-0">
@@ -81,7 +90,7 @@ export function NewsList({ initialNews }: { initialNews: NewsItem[] }) {
                       {item.title}
                     </Link>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {item.source} - {formatDate(item.publishedDate!)}
+                      {item.source} - <FormattedDate dateString={item.publishedDate!} />
                     </p>
                   </div>
                   <Badge variant="outline">{item.sentiment}</Badge>
