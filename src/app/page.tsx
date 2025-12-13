@@ -9,14 +9,14 @@ export default function Home() {
     day: 'numeric',
   });
   return (
-    <div className="flex flex-col gap-6">
-      <header>
+    <div className="flex flex-col gap-8">
+      <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold font-headline tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
           Today's AI-powered stock recommendations for NSE & BSE.
         </p>
       </header>
-      <Card className="bg-card/60 backdrop-blur-sm border-border/30">
+      <Card>
         <CardHeader>
           <CardTitle>Daily Market Pulse</CardTitle>
           <CardDescription>
