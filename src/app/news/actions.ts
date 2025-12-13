@@ -52,7 +52,6 @@ export async function getNews(page: number = 1): Promise<NewsItem[]> {
   noStore();
   
   const feeds = [
-    { url: 'https://nsearchives.nseindia.com/corporates/corporateHome.rss', source: 'NSE Announcements' },
     { url: 'https://www.moneycontrol.com/rss/latestnews.xml', source: 'Moneycontrol' }
   ];
 
