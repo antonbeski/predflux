@@ -52,7 +52,7 @@ async function fetchAndParseFeed(url: string, source: string): Promise<NewsItem[
 export async function getNews(page: number = 1): Promise<NewsItem[]> {
   noStore();
   const nseUrl = 'https://www.nseindia.com/api/press-releases/rss';
-  const bseUrl = 'https://www.bseindia.com/RssFeed/Equity.xml';
+  const bseUrl = 'https://www.bseindia.com/SiteCache/RSS/Equity.xml';
 
   const [nseNews, bseNews] = await Promise.all([
     fetchAndParseFeed(nseUrl, 'NSE India'),
