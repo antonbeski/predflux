@@ -83,7 +83,9 @@ export function AppHeader() {
       try {
         const response = await searchStocks({ query });
         setResults(response.results);
-        setPopoverOpen(true);
+        if (response.results.length > 0) {
+          setPopoverOpen(true);
+        }
       } catch (error) {
         console.error("AI search failed:", error);
         setResults([]);
@@ -148,32 +150,6 @@ export function AppHeader() {
                 </div>
               </form>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
-              {results.length > 0 ? (
-                <ul className="divide-y max-h-96 overflow-y-auto">
-                  {results.map((stock) => (
-                    <li key={stock.ticker}>
-                      <button
-                        onClick={() => handleSelect(stock.ticker)}
-                        className="w-full text-left p-3 hover:bg-accent focus:outline-none focus:bg-accent"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8 text-xs">
-                            <AvatarFallback>{stock.ticker.slice(0,2)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold">{stock.name} ({stock.ticker})</p>
-                            <p className="text-sm text-muted-foreground">{stock.reason}</p>
-                          </div>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                !loading && query && <p className="p-4 text-sm text-muted-foreground text-center">No results found for "{query}". Try a ticker like 'AAPL' or a company name.</p>
-              )}
-            </PopoverContent>
           </Popover>
         </div>
         <ThemeToggle />
