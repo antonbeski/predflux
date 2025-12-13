@@ -70,7 +70,13 @@ const searchStocksFlow = ai.defineFlow(
     if (!input.query) {
       return { results: [] };
     }
-    const { output } = await searchStocksPrompt(input);
-    return output!;
+    try {
+      const { output } = await searchStocksPrompt(input);
+      return output!;
+    } catch (error) {
+      console.error('AI search failed:', error);
+      // Return an empty result in case of an error to prevent the app from crashing.
+      return { results: [] };
+    }
   }
 );
