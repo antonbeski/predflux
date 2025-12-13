@@ -3,7 +3,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import type { StockDetails } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { BrainCircuit } from "lucide-react";
 
 export function AiAnalysisCard({ analysis }: { analysis: StockDetails['analysis'] }) {
     const recommendationColor =
@@ -17,7 +16,6 @@ export function AiAnalysisCard({ analysis }: { analysis: StockDetails['analysis'
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-            <BrainCircuit className="size-5" />
             <span>AI Analysis</span>
         </CardTitle>
         <CardDescription>Gemini 2.5 Flash Recommendation</CardDescription>
