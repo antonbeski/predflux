@@ -41,7 +41,7 @@ async function fetchAndParseFeed(url: string, source: string): Promise<NewsItem[
       source: source,
       sentiment: 'Neutral', // Placeholder
       publishedDate: item.pubDate || item.published || item.updated || new Date().toISOString(),
-    })).filter(item => item.title);
+    })).filter(item => item.title && item.url !== '#');
   } catch (error) {
     console.error(`Error fetching or parsing ${source} feed:`, error);
     return [];
@@ -53,7 +53,6 @@ export async function getNews(page: number = 1): Promise<NewsItem[]> {
   
   const feeds = [
     { url: 'https://nsearchives.nseindia.com/corporates/corporateHome.rss', source: 'NSE Announcements' },
-    { url: 'https://www.bseindia.com/xml-data/corpfiling_rss.xml', source: 'BSE Filings' },
     { url: 'https://www.moneycontrol.com/rss/latestnews.xml', source: 'Moneycontrol' }
   ];
 
