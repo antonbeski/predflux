@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getNews } from './actions';
 import type { NewsItem } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
@@ -49,7 +48,18 @@ export function NewsList({ initialNews }: { initialNews: NewsItem[] }) {
         observer.unobserve(loader);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, isLoading, page]);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Just now';
+    try {
+      const date = new Date(dateString);
+      return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    } catch (e) {
+      return dateString;
+    }
+  }
 
   return (
     <Card>
@@ -63,7 +73,7 @@ export function NewsList({ initialNews }: { initialNews: NewsItem[] }) {
                       {item.title}
                     </Link>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {item.source} - {new Date(item.publishedDate!).toLocaleString()}
+                      {item.source} - {formatDate(item.publishedDate!)}
                     </p>
                   </div>
                   <Badge variant="outline">{item.sentiment}</Badge>
