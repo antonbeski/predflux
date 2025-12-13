@@ -1,3 +1,4 @@
+
 "use client";
 import React from "react";
 import Link from "next/link";
@@ -71,27 +72,30 @@ export function AppHeader() {
   }
 
   React.useEffect(() => {
-    if (!query) {
+    if (!query.trim()) {
       setResults([]);
       setPopoverOpen(false);
+      setLoading(false);
       return;
     }
 
     const performSearch = async () => {
       setLoading(true);
-      setPopoverOpen(true);
       const availableStocks = dailyRecommendations.map(({ ticker, name }) => ({ ticker, name }));
       try {
         const response = await searchStocks({ query, stocks: availableStocks });
         setResults(response.results);
+        setPopoverOpen(true);
       } catch (error) {
         console.error("AI search failed:", error);
         setResults([]);
+        setPopoverOpen(false);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    const debounceTimeout = setTimeout(performSearch, 500);
+    const debounceTimeout = setTimeout(performSearch, 300);
     return () => clearTimeout(debounceTimeout);
   }, [query]);
 
@@ -133,19 +137,20 @@ export function AppHeader() {
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => query && setPopoverOpen(true)}
                   />
                   {loading && <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground animate-spin" />}
                 </div>
               </form>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" onOpenAutoFocus={(e) => e.preventDefault()}>
               {results.length > 0 ? (
-                <ul className="divide-y">
+                <ul className="divide-y max-h-96 overflow-y-auto">
                   {results.map((stock) => (
                     <li key={stock.ticker}>
                       <button
                         onClick={() => handleSelect(stock.ticker)}
-                        className="w-full text-left p-3 hover:bg-accent"
+                        className="w-full text-left p-3 hover:bg-accent focus:outline-none focus:bg-accent"
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8 text-xs">
@@ -161,7 +166,7 @@ export function AppHeader() {
                   ))}
                 </ul>
               ) : (
-                !loading && query && <p className="p-4 text-sm text-muted-foreground text-center">No results found.</p>
+                !loading && query && <p className="p-4 text-sm text-muted-foreground text-center">No results found for "{query}".</p>
               )}
             </PopoverContent>
           </Popover>
@@ -193,3 +198,4 @@ export function AppHeader() {
     </header>
   );
 }
+
