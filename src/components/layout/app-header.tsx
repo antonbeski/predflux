@@ -19,7 +19,6 @@ import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useRouter } from "next/navigation";
 import { searchStocks } from "@/ai/flows/search-stocks";
-import { dailyRecommendations } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -81,9 +80,8 @@ export function AppHeader() {
 
     const performSearch = async () => {
       setLoading(true);
-      const availableStocks = dailyRecommendations.map(({ ticker, name }) => ({ ticker, name }));
       try {
-        const response = await searchStocks({ query, stocks: availableStocks });
+        const response = await searchStocks({ query });
         setResults(response.results);
         setPopoverOpen(true);
       } catch (error) {
@@ -128,7 +126,14 @@ export function AppHeader() {
         <div className="ml-auto flex-1 sm:flex-initial">
           <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
-              <form onSubmit={(e) => e.preventDefault()}>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if(results.length > 0) {
+                  handleSelect(results[0].ticker);
+                } else if(query) {
+                  handleSelect(query);
+                }
+              }}>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -137,7 +142,7 @@ export function AppHeader() {
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => query && setPopoverOpen(true)}
+                    onFocus={() => query && results.length > 0 && setPopoverOpen(true)}
                   />
                   {loading && <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground animate-spin" />}
                 </div>
@@ -166,7 +171,7 @@ export function AppHeader() {
                   ))}
                 </ul>
               ) : (
-                !loading && query && <p className="p-4 text-sm text-muted-foreground text-center">No results found for "{query}".</p>
+                !loading && query && <p className="p-4 text-sm text-muted-foreground text-center">No results found for "{query}". Try a ticker like 'AAPL' or a company name.</p>
               )}
             </PopoverContent>
           </Popover>
@@ -198,4 +203,3 @@ export function AppHeader() {
     </header>
   );
 }
-

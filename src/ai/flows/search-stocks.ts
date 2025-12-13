@@ -12,25 +12,21 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const StockInfoSchema = z.object({
-  ticker: z.string().describe('The stock ticker symbol.'),
-  name: z.string().describe('The name of the company.'),
-});
-
 const SearchStocksInputSchema = z.object({
-  query: z.string().describe('The user\'s search query for stocks.'),
-  stocks: z.array(StockInfoSchema).describe('A list of available stocks to search from.'),
+  query: z.string().describe("The user's search query for stocks (e.g., 'Apple', 'MSFT', 'reliance industries')."),
 });
 export type SearchStocksInput = z.infer<typeof SearchStocksInputSchema>;
 
 const SearchedStockSchema = z.object({
-  ticker: z.string().describe('The stock ticker symbol.'),
-  name: z.string().describe('The company name.'),
-  reason: z.string().describe('A brief reason why this stock matches the query.'),
+  ticker: z.string().describe('The stock ticker symbol identified from the query.'),
+  name: z.string().describe('The company name identified from the query.'),
+  reason: z.string().describe('A brief explanation of what was identified.'),
 });
 
 const SearchStocksOutputSchema = z.object({
-  results: z.array(SearchedStockSchema).describe('An array of stock results matching the query.'),
+  results: z
+    .array(SearchedStockSchema)
+    .describe('An array of stock results matching the query. If a ticker is identified, return it.'),
 });
 export type SearchStocksOutput = z.infer<typeof SearchStocksOutputSchema>;
 
@@ -42,21 +38,26 @@ const searchStocksPrompt = ai.definePrompt({
   name: 'searchStocksPrompt',
   input: { schema: SearchStocksInputSchema },
   output: { schema: SearchStocksOutputSchema },
-  prompt: `You are an AI assistant for a stock trading app. Your task is to help users find relevant stocks based on their search query from a predefined list.
+  prompt: `You are an AI assistant for a stock trading app. Your task is to identify potential stock tickers and company names from a user's search query.
 
 User query: "{{query}}"
 
-Available stocks:
-{{#each stocks}}
-- {{ticker}}: {{name}}
-{{/each}}
+Your task:
+1.  Analyze the user's query to identify a plausible stock ticker symbol or a company name.
+2.  The ticker symbol is the most important piece of information. If the query looks like a ticker (e.g., 'AAPL', 'MSFT', 'RELIANCE'), extract it.
+3.  If the query is a company name (e.g., 'Apple', 'Microsoft', 'Reliance Industries'), provide the most likely ticker symbol for it on a major exchange (like NASDAQ for US stocks, or NSE/BSE for Indian stocks).
+4.  Return a single result containing the identified ticker and company name.
+5.  For the 'reason' field, briefly state what you identified (e.g., "Identified 'AAPL' as a ticker." or "Identified 'Microsoft' as a company.").
 
-Analyze the user's query and return a list of matching stocks from the available list.
-For each match, provide a brief, one-sentence reason why it is relevant to the query.
-If the query is a ticker or company name, return that stock.
-If the query is a category (e.g., "tech stocks"), return stocks that fit that category.
-If no stocks match, return an empty list.
-Return a maximum of 5 results.`,
+Example 1:
+User query: "msft"
+Output: { "results": [{ "ticker": "MSFT", "name": "Microsoft", "reason": "Identified 'msft' as a ticker." }] }
+
+Example 2:
+User query: "Tata Motors"
+Output: { "results": [{ "ticker": "TATAMOTORS", "name": "Tata Motors", "reason": "Identified 'Tata Motors' as a company." }] }
+
+If no plausible ticker or company can be identified, return an empty list of results.`,
 });
 
 const searchStocksFlow = ai.defineFlow(
