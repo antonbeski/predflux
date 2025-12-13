@@ -8,14 +8,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-  Home,
   Menu,
-  Newspaper,
   Search,
   Loader2,
-  TrendingUp,
-  Settings,
-  CircleHelp,
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { Input } from "../ui/input";
@@ -111,7 +106,7 @@ export function AppHeader() {
     <>
       <NavLink href="/" isActive={isActive("/", true)}>Dashboard</NavLink>
       <NavLink href="#" isActive={isActive("/movers")}>Top Movers</NavLink>
-      <NavLink href="#" isActive={isActive("/news")}>News</NavLink>
+      <NavLink href="/news" isActive={isActive("/news")}>News</NavLink>
     </>
   );
 
@@ -192,7 +187,7 @@ export function AppHeader() {
             <nav className="grid gap-6 text-lg font-medium">
                 <NavLink href="/" isActive={isActive("/", true)} isMobile>Dashboard</NavLink>
                 <NavLink href="#" isActive={isActive("/movers")} isMobile>Top Movers</NavLink>
-                <NavLink href="#" isActive={isActive("/news")} isMobile>News</NavLink>
+                <NavLink href="/news" isActive={isActive("/news")} isMobile>News</NavLink>
                 <NavLink href="#" isActive={isActive("/help")} isMobile>Help</NavLink>
                 <NavLink href="#" isActive={isActive("/settings")} isMobile>Settings</NavLink>
             </nav>

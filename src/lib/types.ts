@@ -16,6 +16,7 @@ export type NewsItem = {
   source: string;
   sentiment: "Positive" | "Negative" | "Neutral";
   url: string;
+  publishedDate?: string;
 };
 
 export interface StockDetails extends Stock {
