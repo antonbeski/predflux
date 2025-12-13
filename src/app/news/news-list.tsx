@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -55,7 +56,14 @@ export function NewsList({ initialNews }: { initialNews: NewsItem[] }) {
     if (!dateString) return 'Just now';
     try {
       const date = new Date(dateString);
-      return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      // Using a consistent format helps prevent hydration issues
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
     } catch (e) {
       return dateString;
     }
