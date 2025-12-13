@@ -7,14 +7,46 @@ import { RecommendationHistory } from "@/components/stock/recommendation-history
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { NewsItem } from "@/lib/types";
+import { unstable_noStore as noStore } from 'next/cache';
+
 
 type Props = {
   params: { ticker: string };
 };
 
-export default function StockDetailPage({ params }: Props) {
+async function getNewsFeed(): Promise<NewsItem[]> {
+  noStore();
+  try {
+    // Using a CORS proxy for development. In production, this should be a dedicated API route.
+    const response = await fetch(`https://cors-anywhere.herokuapp.com/https://www.nseindia.com/api/press-releases/rss`);
+    if (!response.ok) {
+      console.error('Failed to fetch RSS feed:', response.status, response.statusText);
+      return [];
+    }
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+    const items = Array.from(xmlDoc.querySelectorAll("item"));
+
+    return items.slice(0, 5).map((item) => ({
+      title: item.querySelector("title")?.textContent || "No title",
+      url: item.querySelector("link")?.textContent || "#",
+      source: item.querySelector("source")?.textContent || "NSE",
+      sentiment: "Neutral", // Sentiment analysis would require an AI model
+    }));
+  } catch (error) {
+    console.error("Error fetching or parsing RSS feed:", error);
+    return [];
+  }
+}
+
+
+export default async function StockDetailPage({ params }: Props) {
   const { ticker } = params;
   const stock = stockDetailsData[ticker.toUpperCase()];
+  const news = await getNewsFeed();
+
 
   if (!stock) {
     return (
@@ -48,7 +80,7 @@ export default function StockDetailPage({ params }: Props) {
         </div>
         <div className="flex flex-col gap-8">
           <AiAnalysisCard analysis={stock.analysis} />
-          <NewsCard news={stock.news} />
+          <NewsCard news={news} />
           <RecommendationHistory history={stock.recommendationHistory} />
         </div>
       </div>

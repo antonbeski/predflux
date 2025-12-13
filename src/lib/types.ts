@@ -11,9 +11,16 @@ export interface Stock {
   reason: string;
 }
 
+export type NewsItem = {
+  title: string;
+  source: string;
+  sentiment: "Positive" | "Negative" | "Neutral";
+  url: string;
+};
+
 export interface StockDetails extends Stock {
   priceHistory: { date: string; price: number }[];
-  news: { title: string; source: string; sentiment: "Positive" | "Negative" | "Neutral"; url: string }[];
+  news: NewsItem[];
   recommendationHistory: { date: string; recommendation: Recommendation; price: number }[];
   analysis: {
     recommendation: Recommendation;
