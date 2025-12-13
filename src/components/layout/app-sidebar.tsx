@@ -44,7 +44,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="group-data-[collapsible=icon]:-mt-8">
+      <SidebarHeader>
         <div className="flex items-center gap-2">
           <Logo />
           <h1 className="text-xl font-semibold font-headline">PREDFLUX</h1>
