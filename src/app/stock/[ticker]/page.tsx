@@ -26,7 +26,7 @@ async function getStockNews(ticker: string): Promise<NewsItem[]> {
 
 
 export default async function StockDetailPage({ params }: Props) {
-  const { ticker } = params;
+  const ticker = params.ticker;
   const stock = stockDetailsData[ticker.toUpperCase()];
   const news = await getStockNews(ticker);
 
