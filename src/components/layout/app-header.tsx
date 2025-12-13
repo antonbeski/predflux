@@ -93,7 +93,7 @@ export function AppHeader() {
       }
     };
 
-    const debounceTimeout = setTimeout(performSearch, 300);
+    const debounceTimeout = setTimeout(performSearch, 500);
     return () => clearTimeout(debounceTimeout);
   }, [query]);
 
