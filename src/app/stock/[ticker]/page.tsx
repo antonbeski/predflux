@@ -9,67 +9,26 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NewsItem } from "@/lib/types";
 import { unstable_noStore as noStore } from 'next/cache';
-import { XMLParser } from "fast-xml-parser";
+import { getNews } from "@/app/news/actions";
 
 
 type Props = {
   params: { ticker: string };
 };
 
-async function getNewsFeed(): Promise<NewsItem[]> {
+async function getStockNews(ticker: string): Promise<NewsItem[]> {
   noStore();
-  try {
-    const response = await fetch('https://www.nseindia.com/api/press-releases/rss', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-
-    if (!response.ok) {
-      console.error('Failed to fetch RSS feed:', response.status, response.statusText);
-      const errorBody = await response.text();
-      console.error('Error Body:', errorBody);
-      return [];
-    }
-
-    const xmlText = await response.text();
-    
-    // The feed seems to return a 404 page sometimes, let's check for it.
-    if (xmlText.includes('<title>404 - Not Found</title>')) {
-        console.warn('NSE RSS feed returned a 404 page.');
-        return [];
-    }
-
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: "@_"
-    });
-    const result = parser.parse(xmlText);
-    
-    let items: any[] = result?.rss?.channel?.item || [];
-
-    // Ensure items is an array
-    if (!Array.isArray(items)) {
-        items = [items];
-    }
-    
-    return items.slice(0, 5).map((item) => ({
-      title: item.title || "No title",
-      url: item.link || "#",
-      source: "NSE India",
-      sentiment: "Neutral", // Sentiment analysis would require an AI model
-    }));
-  } catch (error) {
-    console.error("Error fetching or parsing RSS feed:", error);
-    return [];
-  }
+  // For now, we'll just get the general news feed.
+  // This could be adapted to search for news specific to the ticker.
+  const allNews = await getNews(1);
+  return allNews.filter(item => item.title.toLowerCase().includes(ticker.toLowerCase())).slice(0, 5);
 }
 
 
 export default async function StockDetailPage({ params }: Props) {
   const { ticker } = params;
   const stock = stockDetailsData[ticker.toUpperCase()];
-  const news = await getNewsFeed();
+  const news = await getStockNews(ticker);
 
 
   if (!stock) {
@@ -77,6 +36,12 @@ export default async function StockDetailPage({ params }: Props) {
         <div className="text-center py-20">
             <h1 className="text-2xl font-bold">Stock Not Found</h1>
             <p className="text-muted-foreground">Detailed analysis for '{ticker.toUpperCase()}' is not available yet.</p>
+             <Button variant="link" asChild className="mt-4">
+              <Link href="/">
+                <ArrowLeft />
+                <span>Back to Dashboard</span>
+              </Link>
+            </Button>
         </div>
     );
   }

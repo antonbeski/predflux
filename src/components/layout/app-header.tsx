@@ -105,7 +105,6 @@ export function AppHeader() {
   const navLinks = (
     <>
       <NavLink href="/" isActive={isActive("/", true)}>Dashboard</NavLink>
-      <NavLink href="#" isActive={isActive("/movers")}>Top Movers</NavLink>
       <NavLink href="/news" isActive={isActive("/news")}>News</NavLink>
     </>
   );
@@ -186,10 +185,7 @@ export function AppHeader() {
             </Link>
             <nav className="grid gap-6 text-lg font-medium">
                 <NavLink href="/" isActive={isActive("/", true)} isMobile>Dashboard</NavLink>
-                <NavLink href="#" isActive={isActive("/movers")} isMobile>Top Movers</NavLink>
                 <NavLink href="/news" isActive={isActive("/news")} isMobile>News</NavLink>
-                <NavLink href="#" isActive={isActive("/help")} isMobile>Help</NavLink>
-                <NavLink href="#" isActive={isActive("/settings")} isMobile>Settings</NavLink>
             </nav>
           </SheetContent>
         </Sheet>

@@ -53,9 +53,22 @@ export const dailyRecommendations: Stock[] = [
   },
 ];
 
-const generatePriceHistory = (base: number) => {
+const deterministicRandom = (seed: string) => {
+  let h = 1779033703, i = 0, c;
+  for (i = 0; i < seed.length; i++) {
+      h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+  }
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  }
+}
+
+const generatePriceHistory = (base: number, ticker: string) => {
   const history = [];
   let currentPrice = base;
+  const random = deterministicRandom(ticker);
   for (let i = 30; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
@@ -63,7 +76,7 @@ const generatePriceHistory = (base: number) => {
       date: date.toISOString().split("T")[0],
       price: parseFloat(currentPrice.toFixed(2)),
     });
-    currentPrice *= 1 + (Math.random() - 0.48) / 10;
+    currentPrice *= 1 + (random() - 0.48) / 10;
   }
   return history;
 };
@@ -74,34 +87,6 @@ const analysisReasons: {[key: string]: string} = {
   HDFCBANK: "With consistent loan book growth and improving net interest margins, HDFC Bank presents a strong buy case. The banking sector outlook is also favorable.",
   INFY: "A downward revision in guidance due to project cancellations from major clients is a significant concern. It is advisable to sell and reassess after the next earnings report.",
   ICICIBANK: "The bank's strong digital presence and robust growth in retail lending make it a compelling buy. The current valuation is attractive for new entrants."
-}
-
-const newsItems: {[key: string]: StockDetails['news']} = {
-  RELIANCE: [
-    { title: "Reliance Retail posts record quarterly profit", source: "Livemint", sentiment: "Positive", url: "#" },
-    { title: "Jio adds 5 million subscribers in May", source: "Economic Times", sentiment: "Positive", url: "#" },
-    { title: "Concerns over O2C business margins loom", source: "Reuters", sentiment: "Negative", url: "#" },
-  ],
-  TCS: [
-    { title: "TCS bags a new deal in the European market", source: "Business Standard", sentiment: "Positive", url: "#" },
-    { title: "IT sector facing hiring freeze, TCS included", source: "The Hindu", sentiment: "Negative", url: "#" },
-    { title: "TCS reports steady but unspectacular quarterly results", source: "Bloomberg", sentiment: "Neutral", url: "#" },
-  ],
-  HDFCBANK: [
-    { title: "HDFC Bank merges with parent, creating a global giant", source: "Reuters", sentiment: "Positive", url: "#" },
-    { title: "RBI imposes penalty on HDFC for regulatory lapses", source: "Livemint", sentiment: "Negative", url: "#" },
-    { title: "HDFC Bank's credit card spending hits all-time high", source: "Economic Times", sentiment: "Positive", url: "#" },
-  ],
-  INFY: [
-    { title: "Infosys loses a major client in the US", source: "Wall Street Journal", sentiment: "Negative", url: "#" },
-    { title: "Infosys announces new AI platform 'Topaz'", source: "Infosys Press Release", sentiment: "Positive", url: "#" },
-    { title: "Analysts downgrade INFY rating post guidance cut", source: "Morgan Stanley", sentiment: "Negative", url: "#" },
-  ],
-  ICICIBANK: [
-    { title: "ICICI Bank's mobile app voted best in Asia", source: "Asia Money", sentiment: "Positive", url: "#" },
-    { title: "ICICI sees strong growth in personal loan segment", source: "The Economic Times", sentiment: "Positive", url: "#" },
-    { title: "ICICI Bank's stock at a 52-week high", source: "Moneycontrol", sentiment: "Positive", url: "#" },
-  ]
 }
 
 const recommendationHistories: {[key: string]: StockDetails['recommendationHistory']} = {
@@ -118,7 +103,7 @@ const recommendationHistories: {[key: string]: StockDetails['recommendationHisto
   HDFCBANK: [
     { date: "2024-07-15", recommendation: "Buy", price: 1520.0 },
     { date: "2024-06-20", recommendation: "Buy", price: 1500.0 },
-    { date: "2024--05-10", recommendation: "Hold", price: 1480.0 },
+    { date: "2024-05-10", recommendation: "Hold", price: 1480.0 },
   ],
   INFY: [
     { date: "2024-07-15", recommendation: "Sell", price: 1530.0 },
@@ -132,18 +117,25 @@ const recommendationHistories: {[key: string]: StockDetails['recommendationHisto
   ]
 }
 
+const confidenceScores: {[key: string]: number} = {
+  RELIANCE: 0.88,
+  TCS: 0.76,
+  HDFCBANK: 0.92,
+  INFY: 0.81,
+  ICICIBANK: 0.95
+}
 
 export const stockDetailsData: { [key: string]: StockDetails } = 
   dailyRecommendations.reduce((acc, stock) => {
     acc[stock.ticker] = {
       ...stock,
-      priceHistory: generatePriceHistory(stock.price),
-      news: newsItems[stock.ticker] || [],
+      priceHistory: generatePriceHistory(stock.price, stock.ticker),
+      news: [],
       recommendationHistory: recommendationHistories[stock.ticker] || [],
       analysis: {
         recommendation: stock.recommendation,
         reasoning: analysisReasons[stock.ticker] || stock.reason,
-        confidenceScore: Math.random() * (0.95 - 0.75) + 0.75, // Random score between 0.75 and 0.95
+        confidenceScore: confidenceScores[stock.ticker] || 0.8,
       },
     };
     return acc;
