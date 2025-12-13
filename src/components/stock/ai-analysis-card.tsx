@@ -16,7 +16,7 @@ export function AiAnalysisCard({ analysis }: { analysis: StockDetails['analysis'
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-            <span>AI Analysis</span>
+            AI Analysis
         </CardTitle>
         <CardDescription>Gemini 2.5 Flash Recommendation</CardDescription>
       </CardHeader>
