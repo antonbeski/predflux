@@ -22,8 +22,9 @@ async function fetchAndParseFeed(url: string, source: string): Promise<NewsItem[
     }
 
     const xmlText = await response.text();
-    if (xmlText.includes('<title>404 - Not Found</title>')) {
-      console.warn(`${source} RSS feed returned a 404 page.`);
+    // It's possible for the fetch to succeed but return an HTML error page.
+    if (xmlText.trim().startsWith('<!DOCTYPE html>') || xmlText.includes('<title>404 - Not Found</title>')) {
+      console.warn(`${source} RSS feed did not return valid XML.`);
       return [];
     }
     
