@@ -1,3 +1,32 @@
+import { StockTable } from "@/components/dashboard/stock-table";
+import { dailyRecommendations } from "@/lib/data";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
 export default function Home() {
-  return <></>;
+  const currentDate = new Date().toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  return (
+    <div className="flex flex-col gap-6">
+      <header>
+        <h1 className="text-3xl font-bold font-headline tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Today's AI-powered stock recommendations for NSE & BSE.
+        </p>
+      </header>
+      <Card className="bg-card/60 backdrop-blur-sm border-border/30">
+        <CardHeader>
+          <CardTitle>Daily Market Pulse</CardTitle>
+          <CardDescription>
+            Recommendations generated on {currentDate}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StockTable stocks={dailyRecommendations} />
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
