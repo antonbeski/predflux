@@ -30,10 +30,7 @@ export function StockTable({ stocks }: { stocks: Stock[] }) {
   const router = useRouter();
 
   const handleRowClick = (ticker: string) => {
-    // For now, only RELIANCE has a detail page in mock data
-    if (ticker.toUpperCase() === 'RELIANCE') {
-      router.push(`/stock/${ticker}`);
-    }
+    router.push(`/stock/${ticker}`);
   };
 
   return (
@@ -53,7 +50,7 @@ export function StockTable({ stocks }: { stocks: Stock[] }) {
             <TableRow 
               key={stock.ticker} 
               onClick={() => handleRowClick(stock.ticker)} 
-              className={stock.ticker.toUpperCase() === 'RELIANCE' ? 'cursor-pointer' : 'cursor-default'}
+              className="cursor-pointer"
             >
               <TableCell>
                 <div className="font-medium">{stock.ticker}</div>

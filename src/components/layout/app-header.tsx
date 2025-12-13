@@ -49,9 +49,7 @@ export function AppHeader() {
   }, [query]);
 
   const handleSelect = (ticker: string) => {
-    if (ticker.toUpperCase() === 'RELIANCE') {
-      router.push(`/stock/${ticker}`);
-    }
+    router.push(`/stock/${ticker}`);
     setQuery("");
     setResults([]);
     setPopoverOpen(false);
@@ -86,8 +84,7 @@ export function AppHeader() {
                   <li key={stock.ticker}>
                     <button
                       onClick={() => handleSelect(stock.ticker)}
-                      disabled={stock.ticker.toUpperCase() !== 'RELIANCE'}
-                      className="w-full text-left p-3 hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full text-left p-3 hover:bg-accent"
                     >
                       <div className="flex items-center gap-3">
                          <Avatar className="h-8 w-8 text-xs">
