@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NewsItem } from "@/lib/types";
 import { unstable_noStore as noStore } from 'next/cache';
+import { XMLParser } from "fast-xml-parser";
 
 
 type Props = {
@@ -18,21 +19,44 @@ type Props = {
 async function getNewsFeed(): Promise<NewsItem[]> {
   noStore();
   try {
-    // Using a CORS proxy for development. In production, this should be a dedicated API route.
-    const response = await fetch(`https://cors-anywhere.herokuapp.com/https://www.nseindia.com/api/press-releases/rss`);
+    const response = await fetch('https://www.nseindia.com/api/press-releases/rss', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
     if (!response.ok) {
       console.error('Failed to fetch RSS feed:', response.status, response.statusText);
+      const errorBody = await response.text();
+      console.error('Error Body:', errorBody);
       return [];
     }
-    const xmlText = await response.text();
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "application/xml");
-    const items = Array.from(xmlDoc.querySelectorAll("item"));
 
+    const xmlText = await response.text();
+    
+    // The feed seems to return a 404 page sometimes, let's check for it.
+    if (xmlText.includes('<title>404 - Not Found</title>')) {
+        console.warn('NSE RSS feed returned a 404 page.');
+        return [];
+    }
+
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: "@_"
+    });
+    const result = parser.parse(xmlText);
+    
+    let items: any[] = result?.rss?.channel?.item || [];
+
+    // Ensure items is an array
+    if (!Array.isArray(items)) {
+        items = [items];
+    }
+    
     return items.slice(0, 5).map((item) => ({
-      title: item.querySelector("title")?.textContent || "No title",
-      url: item.querySelector("link")?.textContent || "#",
-      source: item.querySelector("source")?.textContent || "NSE",
+      title: item.title || "No title",
+      url: item.link || "#",
+      source: "NSE India",
       sentiment: "Neutral", // Sentiment analysis would require an AI model
     }));
   } catch (error) {
