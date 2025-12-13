@@ -56,7 +56,6 @@ export async function getNews(page: number = 1): Promise<NewsItem[]> {
     { url: 'https://www.bseindia.com/xml-data/corpfiling_rss.xml', source: 'BSE Filings' },
     { url: 'https://www.moneycontrol.com/rss/latestnews.xml', source: 'Moneycontrol' },
     { url: 'https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms', source: 'Economic Times' },
-    { url: 'https://www.cnbctv18.com/rss/business.xml', source: 'CNBC-TV18' }
   ];
 
   const allNewsPromises = feeds.map(feed => fetchAndParseFeed(feed.url, feed.source));
