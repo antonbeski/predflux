@@ -16,10 +16,8 @@ import {
 import { ThemeToggle } from "./theme-toggle";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useRouter } from "next/navigation";
 import { searchStocks } from "@/ai/flows/search-stocks";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 const Logo = () => (
@@ -126,31 +124,27 @@ export function AppHeader() {
 
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         <div className="ml-auto flex-1 sm:flex-initial">
-          <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger asChild>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                if(results.length > 0) {
-                  handleSelect(results[0].ticker);
-                } else if(query) {
-                  handleSelect(query);
-                }
-              }}>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search stocks with AI..."
-                    className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => query && results.length > 0 && setPopoverOpen(true)}
-                  />
-                  {loading && <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground animate-spin" />}
-                </div>
-              </form>
-            </PopoverTrigger>
-          </Popover>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if(results.length > 0) {
+                handleSelect(results[0].ticker);
+              } else if(query) {
+                handleSelect(query);
+              }
+            }}>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search stocks with AI..."
+                  className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => query && results.length > 0 && setPopoverOpen(true)}
+                />
+                {loading && <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground animate-spin" />}
+              </div>
+            </form>
         </div>
         <ThemeToggle />
         <Sheet>
