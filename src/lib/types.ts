@@ -3,7 +3,7 @@ export type Recommendation = "Buy" | "Sell" | "Hold";
 export interface Stock {
   ticker: string;
   name: string;
-  exchange: "NSE" | "BSE";
+  exchange: string;
   price: number;
   change: number;
   changePercent: number;
@@ -17,6 +17,7 @@ export type NewsItem = {
   sentiment: "Positive" | "Negative" | "Neutral";
   url: string;
   publishedDate?: string;
+  publisher: string;
 };
 
 export interface StockDetails extends Stock {

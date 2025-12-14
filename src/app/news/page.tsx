@@ -1,17 +1,18 @@
-import { getMarketNews } from '@/lib/finnhub/finnhub-actions';
+import { getMarketNews } from '@/lib/yfinance-actions';
 import { NewsList } from './news-list';
 import type { NewsItem } from '@/lib/types';
 
 
 async function getNews() {
-  const newsData = await getMarketNews('general');
+  const newsData = await getMarketNews();
   // Return only the first 10 for the initial load. More will be loaded via infinite scroll.
   const formattedNews: NewsItem[] = newsData.slice(0, 10).map((item: any) => ({
-    title: item.headline,
-    url: item.url,
-    source: item.source,
-    sentiment: 'Neutral', // Finnhub basic news doesn't provide sentiment
-    publishedDate: new Date(item.datetime * 1000).toISOString(),
+    title: item.title,
+    url: item.link,
+    source: item.publisher,
+    sentiment: 'Neutral', // yahoo-finance2 does not provide sentiment
+    publishedDate: item.providerPublishTime ? new Date(item.providerPublishTime).toISOString() : new Date().toISOString(),
+    publisher: item.publisher,
   }));
   return formattedNews;
 }

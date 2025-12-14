@@ -3,8 +3,7 @@ import { cn } from "@/lib/utils";
 
 export function StockDetailsCard({ stock }: { stock: any }) {
   const isPositive = stock.change > 0;
-  const exchange = stock.exchange?.split(' ')[0] || '';
-  const displayExchange = exchange.includes('NSE') ? 'NSE' : exchange.includes('BSE') ? 'BSE' : exchange;
+  const displayExchange = stock.exchange?.split(' ')[0] || '';
   
   return (
     <Card>

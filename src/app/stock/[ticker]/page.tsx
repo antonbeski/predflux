@@ -7,9 +7,10 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { unstable_noStore as noStore } from 'next/cache';
-import { getCompanyNews, getCompanyProfile, getQuote, getStockCandles } from "@/lib/finnhub/finnhub-actions";
+import { getCompanyNews, getQuote, getStockCandles } from "@/lib/yfinance-actions";
 import { analyzeStockDataAndGenerateRecommendations } from "@/ai/flows/analyze-stock-data-and-generate-recommendations";
 import { WatchlistButton } from "@/components/stock/watchlist-button";
+import type { NewsItem } from "@/lib/types";
 
 type Props = {
   params: { ticker: string };
@@ -20,60 +21,56 @@ async function getStockData(ticker: string) {
     noStore();
     try {
         const quotePromise = getQuote(ticker);
-        const profilePromise = getCompanyProfile(ticker);
 
         const today = new Date();
         const oneMonthAgo = new Date(new Date().setMonth(today.getMonth() - 1));
-        const to = Math.floor(today.getTime() / 1000);
-        const from = Math.floor(oneMonthAgo.getTime() / 1000);
 
-        const candlesPromise = getStockCandles(ticker, 'D', from, to);
-        const newsPromise = getCompanyNews(ticker, oneMonthAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]);
+        const candlesPromise = getStockCandles(ticker, oneMonthAgo, today);
+        const newsPromise = getCompanyNews(ticker);
 
-
-        const [quote, profile, candles, news] = await Promise.all([
+        const [quote, candles, news] = await Promise.all([
             quotePromise,
-            profilePromise,
             candlesPromise,
-            newsPromise,
+            newsPromise
         ]);
-
-        if (!profile.ticker) {
+        
+        if (!quote || !quote.symbol) {
             return null;
         }
 
-        const priceHistory = candles.t.map((timestamp: number, index: number) => ({
-            date: new Date(timestamp * 1000).toISOString().split('T')[0],
-            price: candles.c[index]
+        const priceHistory = candles.map((candle: any) => ({
+            date: candle.date.toISOString().split('T')[0],
+            price: candle.close
         }));
         
-        const formattedNews = news.slice(0, 5).map((item: any) => ({
-            title: item.headline,
-            url: item.url,
-            source: item.source,
-            sentiment: 'Neutral', // Finnhub basic news doesn't provide sentiment
-            publishedDate: new Date(item.datetime * 1000).toISOString(),
+        const formattedNews: NewsItem[] = news.slice(0, 5).map((item: any) => ({
+            title: item.title,
+            url: item.link,
+            source: item.publisher,
+            sentiment: 'Neutral',
+            publishedDate: item.providerPublishTime ? new Date(item.providerPublishTime).toISOString() : new Date().toISOString(),
+            publisher: item.publisher,
         }));
 
         const analysisInput = {
             stockTicker: ticker,
             newsData: JSON.stringify(formattedNews.map(n => n.title)),
             financialData: JSON.stringify({
-                currentPrice: quote.c,
-                previousClose: quote.pc,
-                change: quote.d,
-                percentChange: quote.dp,
+                currentPrice: quote.regularMarketPrice,
+                previousClose: quote.regularMarketPreviousClose,
+                change: quote.regularMarketChange,
+                percentChange: quote.regularMarketChangePercent,
             }),
         };
         const analysis = await analyzeStockDataAndGenerateRecommendations(analysisInput);
 
         return {
-            ticker: profile.ticker,
-            name: profile.name,
-            exchange: profile.exchange,
-            price: quote.c,
-            change: quote.d,
-            changePercent: quote.dp,
+            ticker: quote.symbol,
+            name: quote.longName || quote.shortName || ticker,
+            exchange: quote.exchangeName || quote.fullExchangeName || 'N/A',
+            price: quote.regularMarketPrice,
+            change: quote.regularMarketChange,
+            changePercent: quote.regularMarketChangePercent,
             priceHistory,
             news: formattedNews,
             analysis,
@@ -87,7 +84,7 @@ async function getStockData(ticker: string) {
 
 
 export default async function StockDetailPage({ params }: Props) {
-  const ticker = params.ticker.toUpperCase();
+  const ticker = decodeURIComponent(params.ticker).toUpperCase();
   const stock = await getStockData(ticker);
 
   if (!stock) {

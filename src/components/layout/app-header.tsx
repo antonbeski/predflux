@@ -24,7 +24,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useUser, useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { Badge } from "../ui/badge";
 
 const Logo = () => (
   <svg
@@ -58,6 +57,7 @@ const NavLink = ({ href, children, isActive, isMobile = false }: { href: string;
 type SearchResult = {
   ticker: string;
   name: string;
+  exchange: string;
 };
 
 const UserNav = () => {
@@ -154,7 +154,7 @@ export function AppHeader() {
   }, [query]);
 
   const handleSelect = (symbol: string) => {
-    router.push(`/stock/${symbol}`);
+    router.push(`/stock/${encodeURIComponent(symbol)}`);
     setQuery("");
     setResults([]);
     setPopoverOpen(false);
@@ -194,7 +194,7 @@ export function AppHeader() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search stocks with AI..."
+                    placeholder="Search any stock..."
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}

@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useState, useEffect } from "react";
 import { useWatchlist } from "@/hooks/use-watchlist";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getQuote } from "@/lib/finnhub/finnhub-actions";
+import { getQuote } from "@/lib/yfinance-actions";
 import type { Stock } from "@/lib/types";
+import { Quote } from "yahoo-finance2/dist/esm/src/modules/quote";
 
 // Top 5 companies by market cap on NSE for demonstration
 const popularStocks = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS"];
@@ -15,18 +16,22 @@ const popularStocks = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICI
 async function getStockData(ticker: string): Promise<Stock | null> {
   try {
     const quote = await getQuote(ticker);
-    if (!quote || typeof quote.c === 'undefined') return null;
+    if (!quote || typeof quote.regularMarketPrice === 'undefined') return null;
+    
+    const changePercent = quote.regularMarketChangePercent;
+    if (typeof changePercent === 'undefined') return null;
+
     // This is a simplified recommendation logic for the dashboard
-    const recommendation = quote.dp > 0.5 ? "Buy" : quote.dp < -0.5 ? "Sell" : "Hold";
-    const reason = quote.dp > 0.5 ? "Strong upward momentum." : quote.dp < -0.5 ? "Significant downward trend." : "Stable, holding pattern.";
+    const recommendation = changePercent > 0.5 ? "Buy" : changePercent < -0.5 ? "Sell" : "Hold";
+    const reason = changePercent > 0.5 ? "Strong upward momentum." : changePercent < -0.5 ? "Significant downward trend." : "Stable, holding pattern.";
     
     return {
       ticker: ticker,
-      name: ticker.split('.')[0], // Placeholder name
-      exchange: ticker.endsWith('.NS') ? 'NSE' : 'BSE',
-      price: quote.c,
-      change: quote.d,
-      changePercent: quote.dp,
+      name: quote.longName || quote.shortName || ticker.split('.')[0],
+      exchange: quote.exchange || (ticker.endsWith('.NS') ? 'NSE' : 'BSE'),
+      price: quote.regularMarketPrice,
+      change: quote.regularMarketChange || 0,
+      changePercent: changePercent,
       recommendation: recommendation,
       reason: reason,
     };

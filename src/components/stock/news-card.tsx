@@ -1,9 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewsItem } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function NewsCardSkeleton() {
@@ -48,18 +46,8 @@ export function NewsCard({ news }: { news: NewsItem[] | null }) {
                     <Link href={item.url} className="text-sm font-medium hover:underline flex-1" target="_blank" rel="noopener noreferrer">
                     {item.title}
                     </Link>
-                    <Badge
-                    variant="outline"
-                    className={cn("whitespace-nowrap", {
-                        "border-green-500/50 text-green-600 dark:text-green-400": item.sentiment === "Positive",
-                        "border-red-500/50 text-red-600 dark:text-red-400": item.sentiment === "Negative",
-                        "border-gray-500/50 text-gray-600 dark:text-gray-400": item.sentiment === "Neutral",
-                    })}
-                    >
-                    {item.sentiment}
-                    </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">{item.source}</p>
+                <p className="text-xs text-muted-foreground">{item.publisher}</p>
                 {index < news.length - 1 && <Separator className="mt-3" />}
                 </li>
             ))}
