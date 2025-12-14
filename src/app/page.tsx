@@ -99,7 +99,7 @@ export default function Home() {
 
       <Tabs defaultValue="recommendations">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="recommendations">Daily Recommendations</TabsTrigger>
+          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           <TabsTrigger value="watchlist">My Watchlist</TabsTrigger>
         </TabsList>
         <TabsContent value="recommendations">
