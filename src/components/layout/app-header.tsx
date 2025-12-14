@@ -241,15 +241,15 @@ export function AppHeader() {
               <Image src="/logo.png" alt="PREDFLUX Logo" width={32} height={32} />
               <h1 className="text-xl font-semibold font-headline">PREDFLUX</h1>
             </Link>
-            <div className="flex flex-col h-full">
-              <nav className="grid gap-6 text-lg font-medium">
+            <div className="flex flex-col gap-6">
+              <nav className="grid gap-4 text-lg font-medium">
                   <NavLink href="/" isActive={isActive("/", true)} isMobile>Dashboard</NavLink>
                   <NavLink href="/news" isActive={isActive("/news")} isMobile>News</NavLink>
               </nav>
-              <div className="mt-auto flex flex-col gap-4">
-                <Separator />
+              <Separator />
+              <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
-                  <span>Switch Theme</span>
+                  <span className="text-lg">Switch Theme</span>
                   <ThemeToggle />
                 </div>
                 <UserNav isMobile={true} />
