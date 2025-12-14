@@ -100,12 +100,12 @@ export default function Home() {
       <Tabs defaultValue="recommendations">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-          <TabsTrigger value="watchlist">My Watchlist</TabsTrigger>
+          <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
         </TabsList>
         <TabsContent value="recommendations">
           <Card>
             <CardHeader>
-              <CardTitle>Daily Market Pulse</CardTitle>
+              <CardTitle>Market Pulse</CardTitle>
               <CardDescription>
                 {currentDate ? `Popular stocks on ${currentDate}.` : 'Loading...'}
               </CardDescription>
