@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { StockDetails } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function StockDetailsCard({ stock }: { stock: StockDetails }) {
+export function StockDetailsCard({ stock }: { stock: any }) {
   const isPositive = stock.change > 0;
   return (
     <Card>
@@ -35,7 +34,7 @@ export function StockDetailsCard({ stock }: { stock: StockDetails }) {
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-sm text-muted-foreground">Exchange</p>
-          <p className="text-2xl font-bold">{stock.exchange}</p>
+          <p className="text-2xl font-bold">{stock.exchange.split(' ')[0]}</p>
         </div>
       </CardContent>
     </Card>

@@ -47,7 +47,7 @@ export async function getCompanyProfile(symbol: string) {
   return finnhubFetch('stock/profile2', { symbol });
 }
 
-export async function getCompanyNews(symbol: string, from: string, to: string) {
+export async function getCompanyNews(symbol:string, from: string, to: string) {
   return finnhubFetch('company-news', { symbol, from, to });
 }
 
@@ -67,4 +67,3 @@ export async function getStockCandles(symbol: string, resolution: string, from: 
 export async function getRecommendationTrends(symbol: string) {
     return finnhubFetch('stock/recommendation', { symbol });
 }
-

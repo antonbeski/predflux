@@ -19,11 +19,12 @@ import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { searchSymbols } from "@/lib/finnhub/finnhub-actions";
+import { searchStocks } from "@/ai/flows/search-stocks";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useUser, useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Badge } from "../ui/badge";
 
 const Logo = () => (
   <svg
@@ -55,10 +56,8 @@ const NavLink = ({ href, children, isActive, isMobile = false }: { href: string;
 );
 
 type SearchResult = {
-  description: string;
-  displaySymbol: string;
-  symbol: string;
-  type: string;
+  ticker: string;
+  name: string;
 };
 
 const UserNav = () => {
@@ -134,9 +133,9 @@ export function AppHeader() {
     const performSearch = async () => {
       setLoading(true);
       try {
-        const response = await searchSymbols(query);
-        setResults(response.result || []);
-        if (response.result && response.result.length > 0) {
+        const response = await searchStocks({ query });
+        setResults(response.results || []);
+        if (response.results && response.results.length > 0) {
           setPopoverOpen(true);
         } else {
           setPopoverOpen(false);
@@ -186,7 +185,7 @@ export function AppHeader() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if(results.length > 0) {
-                  handleSelect(results[0].symbol);
+                  handleSelect(results[0].ticker);
                 } else if(query) {
                   handleSelect(query.toUpperCase());
                 }
@@ -195,7 +194,7 @@ export function AppHeader() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search stocks..."
+                    placeholder="Search stocks with AI..."
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -213,16 +212,15 @@ export function AppHeader() {
                   <ul className="max-h-96 overflow-y-auto">
                     {results.slice(0, 10).map((stock) => (
                        <li 
-                         key={stock.symbol}
+                         key={stock.ticker}
                          className="p-4 border-b last:border-b-0 hover:bg-accent cursor-pointer"
-                         onClick={() => handleSelect(stock.symbol)}
+                         onClick={() => handleSelect(stock.ticker)}
                        >
                          <div className="flex justify-between items-center">
                            <div>
-                             <p className="font-semibold">{stock.symbol}</p>
-                             <p className="text-sm text-muted-foreground truncate">{stock.description}</p>
+                             <p className="font-semibold">{stock.ticker}</p>
+                             <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
                            </div>
-                           <Badge variant="outline">{stock.type}</Badge>
                          </div>
                        </li>
                     ))}

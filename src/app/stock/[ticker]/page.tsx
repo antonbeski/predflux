@@ -1,41 +1,111 @@
-import { stockDetailsData } from "@/lib/data";
+
 import { StockDetailsCard } from "@/components/stock/stock-details-card";
 import { AiAnalysisCard } from "@/components/stock/ai-analysis-card";
 import { StockChart } from "@/components/stock/stock-chart";
 import { NewsCard } from "@/components/stock/news-card";
 import { RecommendationHistory } from "@/components/stock/recommendation-history";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Star, StarOff } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { NewsItem } from "@/lib/types";
 import { unstable_noStore as noStore } from 'next/cache';
-import { getNews } from "@/app/news/actions";
-
+import { getCompanyNews, getCompanyProfile, getQuote, getRecommendationTrends, getStockCandles } from "@/lib/finnhub/finnhub-actions";
+import { analyzeStockDataAndGenerateRecommendations } from "@/ai/flows/analyze-stock-data-and-generate-recommendations";
+import { WatchlistButton } from "@/components/stock/watchlist-button";
 
 type Props = {
   params: { ticker: string };
 };
 
-async function getStockNews(ticker: string): Promise<NewsItem[]> {
-  noStore();
-  // For now, we'll just get the general news feed.
-  // This could be adapted to search for news specific to the ticker.
-  const allNews = await getNews(1);
-  return allNews.filter(item => item.title.toLowerCase().includes(ticker.toLowerCase())).slice(0, 5);
+
+async function getStockData(ticker: string) {
+    noStore();
+    try {
+        const quotePromise = getQuote(ticker);
+        const profilePromise = getCompanyProfile(ticker);
+
+        const today = new Date();
+        const oneMonthAgo = new Date(new Date().setMonth(today.getMonth() - 1));
+        const to = Math.floor(today.getTime() / 1000);
+        const from = Math.floor(oneMonthAgo.getTime() / 1000);
+
+        const candlesPromise = getStockCandles(ticker, 'D', from, to);
+        const newsPromise = getCompanyNews(ticker, oneMonthAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]);
+        const recommendationTrendsPromise = getRecommendationTrends(ticker);
+
+
+        const [quote, profile, candles, news, recommendationTrends] = await Promise.all([
+            quotePromise,
+            profilePromise,
+            candlesPromise,
+            newsPromise,
+            recommendationTrendsPromise
+        ]);
+
+        if (!profile.ticker) {
+            return null;
+        }
+
+        const priceHistory = candles.t.map((timestamp: number, index: number) => ({
+            date: new Date(timestamp * 1000).toISOString().split('T')[0],
+            price: candles.c[index]
+        }));
+        
+        const formattedNews = news.slice(0, 5).map((item: any) => ({
+            title: item.headline,
+            url: item.url,
+            source: item.source,
+            sentiment: 'Neutral', // Finnhub basic news doesn't provide sentiment
+            publishedDate: new Date(item.datetime * 1000).toISOString(),
+        }));
+
+        const recommendationHistory = recommendationTrends.slice(0, 5).map((item: any) => ({
+            date: item.period,
+            recommendation: item.strongBuy > item.strongSell ? 'Buy' : 'Sell',
+            price: quote.c, // Not available in finnhub history, using current price as a stand in
+        }))
+
+
+        const analysisInput = {
+            stockTicker: ticker,
+            newsData: JSON.stringify(formattedNews.map(n => n.title)),
+            financialData: JSON.stringify({
+                currentPrice: quote.c,
+                previousClose: quote.pc,
+                change: quote.d,
+                percentChange: quote.dp,
+            }),
+        };
+        const analysis = await analyzeStockDataAndGenerateRecommendations(analysisInput);
+
+        return {
+            ticker: profile.ticker,
+            name: profile.name,
+            exchange: profile.exchange,
+            price: quote.c,
+            change: quote.d,
+            changePercent: quote.dp,
+            priceHistory,
+            news: formattedNews,
+            analysis,
+            recommendationHistory
+        };
+
+    } catch (error) {
+        console.error(`Failed to fetch stock data for ${ticker}:`, error);
+        return null;
+    }
 }
 
 
 export default async function StockDetailPage({ params }: Props) {
-  const ticker = params.ticker;
-  const stock = stockDetailsData[ticker.toUpperCase()];
-  const news = await getStockNews(ticker);
-
+  const ticker = params.ticker.toUpperCase();
+  const stock = await getStockData(ticker);
 
   if (!stock) {
     return (
         <div className="text-center py-20">
             <h1 className="text-2xl font-bold">Stock Not Found</h1>
-            <p className="text-muted-foreground">Detailed analysis for '{ticker.toUpperCase()}' is not available yet.</p>
+            <p className="text-muted-foreground">Could not retrieve data for '{ticker}'. Please check the symbol and try again.</p>
              <Button variant="link" asChild className="mt-4">
               <Link href="/">
                 <ArrowLeft />
@@ -61,6 +131,7 @@ export default async function StockDetailPage({ params }: Props) {
             {stock.exchange}
           </p>
         </header>
+        <WatchlistButton ticker={stock.ticker} />
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 flex flex-col gap-8">
@@ -69,7 +140,7 @@ export default async function StockDetailPage({ params }: Props) {
         </div>
         <div className="flex flex-col gap-8">
           <AiAnalysisCard analysis={stock.analysis} />
-          <NewsCard news={news} />
+          <NewsCard news={stock.news} />
           <RecommendationHistory history={stock.recommendationHistory} />
         </div>
       </div>
