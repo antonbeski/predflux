@@ -22,7 +22,6 @@ export type NewsItem = {
 export interface StockDetails extends Stock {
   priceHistory: { date: string; price: number }[];
   news: NewsItem[];
-  recommendationHistory: { date: string; recommendation: Recommendation; price: number }[];
   analysis: {
     recommendation: Recommendation;
     reasoning: string;

@@ -3,12 +3,11 @@ import { StockDetailsCard } from "@/components/stock/stock-details-card";
 import { AiAnalysisCard } from "@/components/stock/ai-analysis-card";
 import { StockChart } from "@/components/stock/stock-chart";
 import { NewsCard } from "@/components/stock/news-card";
-import { RecommendationHistory } from "@/components/stock/recommendation-history";
-import { ArrowLeft, Star, StarOff } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { unstable_noStore as noStore } from 'next/cache';
-import { getCompanyNews, getCompanyProfile, getQuote, getRecommendationTrends, getStockCandles } from "@/lib/finnhub/finnhub-actions";
+import { getCompanyNews, getCompanyProfile, getQuote, getStockCandles } from "@/lib/finnhub/finnhub-actions";
 import { analyzeStockDataAndGenerateRecommendations } from "@/ai/flows/analyze-stock-data-and-generate-recommendations";
 import { WatchlistButton } from "@/components/stock/watchlist-button";
 
@@ -30,15 +29,13 @@ async function getStockData(ticker: string) {
 
         const candlesPromise = getStockCandles(ticker, 'D', from, to);
         const newsPromise = getCompanyNews(ticker, oneMonthAgo.toISOString().split('T')[0], today.toISOString().split('T')[0]);
-        const recommendationTrendsPromise = getRecommendationTrends(ticker);
 
 
-        const [quote, profile, candles, news, recommendationTrends] = await Promise.all([
+        const [quote, profile, candles, news] = await Promise.all([
             quotePromise,
             profilePromise,
             candlesPromise,
             newsPromise,
-            recommendationTrendsPromise
         ]);
 
         if (!profile.ticker) {
@@ -57,13 +54,6 @@ async function getStockData(ticker: string) {
             sentiment: 'Neutral', // Finnhub basic news doesn't provide sentiment
             publishedDate: new Date(item.datetime * 1000).toISOString(),
         }));
-
-        const recommendationHistory = recommendationTrends.slice(0, 5).map((item: any) => ({
-            date: item.period,
-            recommendation: item.strongBuy > item.strongSell ? 'Buy' : 'Sell',
-            price: quote.c, // Not available in finnhub history, using current price as a stand in
-        }))
-
 
         const analysisInput = {
             stockTicker: ticker,
@@ -87,7 +77,6 @@ async function getStockData(ticker: string) {
             priceHistory,
             news: formattedNews,
             analysis,
-            recommendationHistory
         };
 
     } catch (error) {
@@ -141,7 +130,6 @@ export default async function StockDetailPage({ params }: Props) {
         <div className="flex flex-col gap-8">
           <AiAnalysisCard analysis={stock.analysis} />
           <NewsCard news={stock.news} />
-          <RecommendationHistory history={stock.recommendationHistory} />
         </div>
       </div>
     </div>

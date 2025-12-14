@@ -63,7 +63,3 @@ export async function getStockCandles(symbol: string, resolution: string, from: 
     to: to.toString(),
   });
 }
-
-export async function getRecommendationTrends(symbol: string) {
-    return finnhubFetch('stock/recommendation', { symbol });
-}
