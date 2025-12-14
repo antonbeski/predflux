@@ -212,7 +212,7 @@ export function AppHeader() {
                   <ul className="max-h-96 overflow-y-auto">
                     {results.slice(0, 10).map((stock) => (
                        <li 
-                         key={stock.ticker}
+                         key={`${stock.ticker}-${stock.name}`}
                          className="p-4 border-b last:border-b-0 hover:bg-accent cursor-pointer"
                          onClick={() => handleSelect(stock.ticker)}
                        >
