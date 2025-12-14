@@ -9,6 +9,9 @@ import { FirebaseClientProvider } from '@/firebase';
 export const metadata: Metadata = {
   title: 'PREDFLUX',
   description: 'AI-powered stock analysis for NSE and BSE stocks.',
+  icons: {
+    icon: '/logo.ico',
+  },
 };
 
 export default function RootLayout({
