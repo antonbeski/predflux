@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useUser, useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Separator } from "../ui/separator";
 
 const Logo = () => (
   <svg
@@ -60,7 +61,7 @@ type SearchResult = {
   exchange: string;
 };
 
-const UserNav = () => {
+const UserNav = ({ isMobile = false }: { isMobile?: boolean }) => {
     const { user, isUserLoading } = useUser();
     const auth = useAuth();
     const router = useRouter();
@@ -76,7 +77,7 @@ const UserNav = () => {
 
     if (!user) {
         return (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant={isMobile ? "secondary" : "outline"} size="sm" className={cn(isMobile && "w-full")}>
                 <Link href="/login">Sign In</Link>
             </Button>
         );
@@ -117,6 +118,7 @@ export function AppHeader() {
   const [results, setResults] = React.useState<SearchResult[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [isPopoverOpen, setPopoverOpen] = React.useState(false);
+  const [isSheetOpen, setSheetOpen] = React.useState(false);
 
   const isActive = (path: string, exact = false) => {
     return exact ? pathname === path : pathname.startsWith(path);
@@ -158,6 +160,7 @@ export function AppHeader() {
     setQuery("");
     setResults([]);
     setPopoverOpen(false);
+    setSheetOpen(false); // Close mobile sheet on navigation
   };
   
   const navLinks = (
@@ -233,9 +236,11 @@ export function AppHeader() {
             </PopoverContent>
           </Popover>
         </div>
-        <ThemeToggle />
-        <UserNav />
-        <Sheet>
+        <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
+            <UserNav />
+        </div>
+        <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -251,13 +256,25 @@ export function AppHeader() {
               <Logo />
               <h1 className="text-xl font-semibold font-headline">PREDFLUX</h1>
             </Link>
-            <nav className="grid gap-6 text-lg font-medium">
-                <NavLink href="/" isActive={isActive("/", true)} isMobile>Dashboard</NavLink>
-                <NavLink href="/news" isActive={isActive("/news")} isMobile>News</NavLink>
-            </nav>
+            <div className="flex flex-col h-full">
+              <nav className="grid gap-6 text-lg font-medium">
+                  <NavLink href="/" isActive={isActive("/", true)} isMobile>Dashboard</NavLink>
+                  <NavLink href="/news" isActive={isActive("/news")} isMobile>News</NavLink>
+              </nav>
+              <div className="mt-auto flex flex-col gap-4">
+                <Separator />
+                <div className="flex justify-between items-center">
+                  <span>Switch Theme</span>
+                  <ThemeToggle />
+                </div>
+                <UserNav isMobile={true} />
+              </div>
+            </div>
           </SheetContent>
         </Sheet>
       </div>
     </header>
   );
 }
+
+    
