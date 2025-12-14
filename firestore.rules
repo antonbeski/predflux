@@ -1,93 +1,38 @@
-/**
- * Core Philosophy: This ruleset enforces a "Public Read, Admin-Only Write" security model. All data related to stocks, financial metrics, news sentiment,
- * and recommendations is considered public information, readable by any user, including those who are not signed in. All client-side write
- * operations (create, update, delete) are explicitly denied to prevent unauthorized data manipulation. It is assumed that data is populated and
- * managed exclusively by a trusted backend service using the Firebase Admin SDK, which bypasses these security rules.
- *
- * Data Structure: The database is organized around a top-level `/stocks` collection. Each document within this collection represents a unique
- * stock and serves as a parent for three subcollections: `financialData`, `newsSentiment`, and `recommendations`. This hierarchical structure
- * allows for efficient querying of all data related to a specific stock.
- *
- * Key Security Decisions:
- * - Public Read Access: All collections and subcollections are world-readable (`get`, `list`) to ensure that the application can freely display stock
- *   information to any visitor.
- * - No Client Writes: All write permissions are disabled (`if false;`). This provides a strong security guarantee that the data visible to users
- *   can only originate from a trusted, server-side source.
- *
- * Denormalization for Authorization: This ruleset does not require denormalization for authorization because there are no user-specific access
- * controls. The security model is uniform for all users.
- *
- * Structural Segregation: The data model does not contain a mix of private and public data, so structural segregation into different
- * collections is not necessary. The entire dataset is treated as public.
- */
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
-    // =================================
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-    // Collection Rules
-    // =================================
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
 
-    /**
-     * @description Controls access to the primary stock metadata documents.
-     * @path /stocks/{stockId}
-     * @allow (get, list) by any user, including anonymous ones, to read stock information.
-     * @deny (create, update, delete) by any client to prevent tampering with core stock data.
-     * @principle Implements a public read-only model for foundational data, assuming writes are handled by a trusted backend.
-     */
-    match /stocks/{stockId} {
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read a user's public profile
       allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
+      
+      // Only the owner can create or update their own profile
+      allow create, update: if isOwner(userId);
+      
+      // Deleting profiles is not allowed
       allow delete: if false;
 
-      /**
-       * @description Controls access to historical financial data for a specific stock.
-       * @path /stocks/{stockId}/financialData/{financialDataId}
-       * @allow (get, list) by any user, as this is public financial information.
-       * @deny (create, update, delete) by any client to maintain data integrity.
-       * @principle Subcollection inherits the public read-only model from its parent, ensuring data is displayed but not modified.
-       */
-      match /stocks/{stockId}/financialData/{financialDataId} {
-        allow get: if true;
-        allow list: if true;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
+      // Watchlist subcollection
+      match /watchlist/{symbol} {
+        // Only the owner can view, add, update, or remove items from their watchlist
+        allow read, write: if isOwner(userId);
       }
-
-      /**
-       * @description Controls access to news sentiment scores for a specific stock.
-       * @path /stocks/{stockId}/newsSentiment/{newsSentimentId}
-       * @allow (get, list) by any user to view sentiment analysis.
-       * @deny (create, update, delete) by any client to protect the integrity of the sentiment data.
-       * @principle Subcollection inherits the public read-only model from its parent, ensuring data is displayed but not modified.
-       */
-      match /stocks/{stockId}/newsSentiment/{newsSentimentId} {
-        allow get: if true;
-        allow list: if true;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
-      }
-
-      /**
-       * @description Controls access to AI-generated buy/sell/hold recommendations for a stock.
-       * @path /stocks/{stockId}/recommendations/{recommendationId}
-       * @allow (get, list) by any user to access the AI recommendations.
-       * @deny (create, update, delete) by any client to prevent manipulation of AI-generated advice.
-       * @principle Subcollection inherits the public read-only model from its parent, ensuring data is displayed but not modified.
-       */
-      match /stocks/{stockId}/recommendations/{recommendationId} {
-        allow get: if true;
-        allow list: if true;
-        allow create: if false;
-        allow update: if false;
-        allow delete: if false;
-      }
+    }
+    
+    // Fallback rule: Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

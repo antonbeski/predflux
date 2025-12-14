@@ -17,9 +17,13 @@ import { ThemeToggle } from "./theme-toggle";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
-import { searchStocks } from "@/ai/flows/search-stocks";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { searchSymbols } from "@/lib/finnhub/finnhub-actions";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { useUser, useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 const Logo = () => (
   <svg
@@ -50,11 +54,61 @@ const NavLink = ({ href, children, isActive, isMobile = false }: { href: string;
   </Link>
 );
 
-
 type SearchResult = {
-  ticker: string;
-  name: string;
-  reason: string;
+  description: string;
+  displaySymbol: string;
+  symbol: string;
+  type: string;
+};
+
+const UserNav = () => {
+    const { user, isUserLoading } = useUser();
+    const auth = useAuth();
+    const router = useRouter();
+
+    const handleSignOut = async () => {
+        await signOut(auth);
+        router.push('/login');
+    };
+
+    if (isUserLoading) {
+        return <Loader2 className="h-5 w-5 animate-spin" />;
+    }
+
+    if (!user) {
+        return (
+            <Button asChild variant="outline" size="sm">
+                <Link href="/login">Sign In</Link>
+            </Button>
+        );
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                        <AvatarFallback>{user.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                    </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                            {user.email}
+                        </p>
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                    Log out
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
 };
 
 export function AppHeader() {
@@ -80,13 +134,15 @@ export function AppHeader() {
     const performSearch = async () => {
       setLoading(true);
       try {
-        const response = await searchStocks({ query });
-        setResults(response.results);
-        if (response.results.length > 0) {
+        const response = await searchSymbols(query);
+        setResults(response.result || []);
+        if (response.result && response.result.length > 0) {
           setPopoverOpen(true);
+        } else {
+          setPopoverOpen(false);
         }
       } catch (error) {
-        console.error("AI search failed:", error);
+        console.error("Search failed:", error);
         setResults([]);
         setPopoverOpen(false);
       } finally {
@@ -94,12 +150,12 @@ export function AppHeader() {
       }
     };
 
-    const debounceTimeout = setTimeout(performSearch, 500);
+    const debounceTimeout = setTimeout(performSearch, 300);
     return () => clearTimeout(debounceTimeout);
   }, [query]);
 
-  const handleSelect = (ticker: string) => {
-    router.push(`/stock/${ticker}`);
+  const handleSelect = (symbol: string) => {
+    router.push(`/stock/${symbol}`);
     setQuery("");
     setResults([]);
     setPopoverOpen(false);
@@ -130,16 +186,16 @@ export function AppHeader() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 if(results.length > 0) {
-                  handleSelect(results[0].ticker);
+                  handleSelect(results[0].symbol);
                 } else if(query) {
-                  handleSelect(query);
+                  handleSelect(query.toUpperCase());
                 }
               }}>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search stocks with AI..."
+                    placeholder="Search stocks..."
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -149,9 +205,38 @@ export function AppHeader() {
                 </div>
               </form>
             </PopoverTrigger>
+            <PopoverContent 
+              className="w-[--radix-popover-trigger-width] p-0"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+                {results.length > 0 ? (
+                  <ul className="max-h-96 overflow-y-auto">
+                    {results.slice(0, 10).map((stock) => (
+                       <li 
+                         key={stock.symbol}
+                         className="p-4 border-b last:border-b-0 hover:bg-accent cursor-pointer"
+                         onClick={() => handleSelect(stock.symbol)}
+                       >
+                         <div className="flex justify-between items-center">
+                           <div>
+                             <p className="font-semibold">{stock.symbol}</p>
+                             <p className="text-sm text-muted-foreground truncate">{stock.description}</p>
+                           </div>
+                           <Badge variant="outline">{stock.type}</Badge>
+                         </div>
+                       </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No results found.
+                  </div>
+                )}
+            </PopoverContent>
           </Popover>
         </div>
         <ThemeToggle />
+        <UserNav />
         <Sheet>
           <SheetTrigger asChild>
             <Button

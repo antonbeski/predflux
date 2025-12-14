@@ -1,248 +1,72 @@
 {
   "entities": {
-    "Stock": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Stock",
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
       "type": "object",
-      "description": "Represents a stock listed on the NSE or BSE.",
       "properties": {
-        "id": {
+        "email": {
           "type": "string",
-          "description": "Unique identifier for the stock.",
-          "format": "uuid"
+          "format": "email",
+          "description": "The user's email address."
         },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time the user account was created."
+        }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "WatchlistItem": {
+      "title": "Watchlist Item",
+      "description": "Represents a stock in a user's watchlist.",
+      "type": "object",
+      "properties": {
         "symbol": {
           "type": "string",
-          "description": "The stock ticker symbol (e.g., RELIANCE.NS)."
+          "description": "The stock ticker symbol."
         },
-        "name": {
+        "addedAt": {
           "type": "string",
-          "description": "The full name of the company (e.g., Reliance Industries Limited)."
-        },
-        "exchange": {
-          "type": "string",
-          "description": "The stock exchange the stock is listed on (e.g., NSE or BSE)."
+          "format": "date-time",
+          "description": "The date and time the stock was added to the watchlist."
         }
       },
-      "required": [
-        "id",
-        "symbol",
-        "name",
-        "exchange"
-      ]
-    },
-    "Recommendation": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Recommendation",
-      "type": "object",
-      "description": "Represents a buy/sell/hold recommendation for a specific stock on a specific date.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the recommendation.",
-          "format": "uuid"
-        },
-        "stockId": {
-          "type": "string",
-          "description": "Reference to Stock. (Relationship: Stock 1:N Recommendation)"
-        },
-        "date": {
-          "type": "string",
-          "description": "The date the recommendation was generated.",
-          "format": "date"
-        },
-        "recommendation": {
-          "type": "string",
-          "description": "The recommendation: buy, sell, or hold."
-        },
-        "aiConfidence": {
-          "type": "number",
-          "description": "Confidence level of the AI analysis, ranging from 0 to 1."
-        }
-      },
-      "required": [
-        "id",
-        "stockId",
-        "date",
-        "recommendation",
-        "aiConfidence"
-      ]
-    },
-    "FinancialData": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "FinancialData",
-      "type": "object",
-      "description": "Stores financial data scraped from various sources for a specific stock on a specific date.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the financial data entry.",
-          "format": "uuid"
-        },
-        "stockId": {
-          "type": "string",
-          "description": "Reference to Stock. (Relationship: Stock 1:N FinancialData)"
-        },
-        "date": {
-          "type": "string",
-          "description": "The date the financial data was recorded.",
-          "format": "date"
-        },
-        "open": {
-          "type": "number",
-          "description": "Opening price of the stock on the date."
-        },
-        "high": {
-          "type": "number",
-          "description": "Highest price of the stock on the date."
-        },
-        "low": {
-          "type": "number",
-          "description": "Lowest price of the stock on the date."
-        },
-        "close": {
-          "type": "number",
-          "description": "Closing price of the stock on the date."
-        },
-        "volume": {
-          "type": "number",
-          "description": "Trading volume of the stock on the date."
-        }
-      },
-      "required": [
-        "id",
-        "stockId",
-        "date",
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume"
-      ]
-    },
-    "NewsSentiment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "NewsSentiment",
-      "type": "object",
-      "description": "Stores news sentiment data scraped from various sources for a specific stock on a specific date.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the news sentiment entry.",
-          "format": "uuid"
-        },
-        "stockId": {
-          "type": "string",
-          "description": "Reference to Stock. (Relationship: Stock 1:N NewsSentiment)"
-        },
-        "date": {
-          "type": "string",
-          "description": "The date the sentiment data was recorded.",
-          "format": "date"
-        },
-        "sentimentScore": {
-          "type": "number",
-          "description": "The sentiment score of the news related to the stock on the date. Ranges from -1 to 1."
-        },
-        "newsSource": {
-          "type": "string",
-          "description": "The source of the news article."
-        }
-      },
-      "required": [
-        "id",
-        "stockId",
-        "date",
-        "sentimentScore",
-        "newsSource"
-      ]
+      "required": ["symbol", "addedAt"]
     }
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
     "structure": [
       {
-        "path": "/stocks/{stockId}",
+        "path": "/users/{userId}",
         "definition": {
-          "entityName": "Stock",
+          "entityName": "UserProfile",
           "schema": {
-            "$ref": "#/backend/entities/Stock"
+            "$ref": "#/entities/UserProfile"
           },
-          "description": "Stores metadata for each stock. The stockId is used to organize financial data, news sentiment, and AI recommendations in subcollections.",
-          "params": [
-            {
-              "name": "stockId",
-              "description": "The unique identifier for the stock."
-            }
-          ]
+          "description": "Stores public-facing profile information for a user."
         }
       },
       {
-        "path": "/stocks/{stockId}/financialData/{financialDataId}",
+        "path": "/users/{userId}/watchlist/{symbol}",
         "definition": {
-          "entityName": "FinancialData",
+          "entityName": "WatchlistItem",
           "schema": {
-            "$ref": "#/backend/entities/FinancialData"
+            "$ref": "#/entities/WatchlistItem"
           },
-          "description": "Stores financial data for a specific stock. stockId references the stock, allowing filtering based on stock. financialDataId is the unique ID of financial data entry.",
-          "params": [
-            {
-              "name": "stockId",
-              "description": "The unique identifier for the stock."
-            },
-            {
-              "name": "financialDataId",
-              "description": "The unique identifier for the financial data entry."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/stocks/{stockId}/newsSentiment/{newsSentimentId}",
-        "definition": {
-          "entityName": "NewsSentiment",
-          "schema": {
-            "$ref": "#/backend/entities/NewsSentiment"
-          },
-          "description": "Stores news sentiment data for a specific stock. stockId references the stock, allowing filtering based on stock. newsSentimentId is the unique ID of news sentiment entry.",
-          "params": [
-            {
-              "name": "stockId",
-              "description": "The unique identifier for the stock."
-            },
-            {
-              "name": "newsSentimentId",
-              "description": "The unique identifier for the news sentiment entry."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/stocks/{stockId}/recommendations/{recommendationId}",
-        "definition": {
-          "entityName": "Recommendation",
-          "schema": {
-            "$ref": "#/backend/entities/Recommendation"
-          },
-          "description": "Stores AI-generated recommendations for a specific stock. stockId references the stock, allowing filtering based on stock. recommendationId is the unique ID of recommendation entry.",
-          "params": [
-            {
-              "name": "stockId",
-              "description": "The unique identifier for the stock."
-            },
-            {
-              "name": "recommendationId",
-              "description": "The unique identifier for the recommendation entry."
-            }
-          ]
+          "description": "A user's personal watchlist of stocks. The document ID is the stock symbol."
         }
       }
-    ],
-    "reasoning": "The Firestore data structure is designed to optimize for secure and efficient data access for the PREDFLUX application. Key considerations are authorization independence, clarity, and scalability.\n\nStocks:\n- The `/stocks` collection stores stock metadata. There is no user-specific ownership, so a single, flat collection is appropriate. This collection is read publicly.\n\nFinancialData:\n- The `/stocks/{stockId}/financialData` subcollection stores financial data for each stock.  This structure leverages path-based filtering, making queries efficient.\n\nNewsSentiment:\n- The `/stocks/{stockId}/newsSentiment` subcollection stores news sentiment data for each stock. This structure allows for efficient stock-specific queries.\n\nRecommendations:\n- The `/stocks/{stockId}/recommendations` subcollection stores the AI-generated recommendations. This structure allows for efficient retrieval of recommendations for a specific stock.\n\nAuthorization Independence and QAPs:\n- The structure avoids hierarchical authorization dependencies by not relying on `get()` calls in security rules. Data is structured to allow for direct access based on the stock ID, ensuring atomic operations.\n- QAPs are supported by segregating data into collections and subcollections with clear, defined security postures. List operations are secured by the collection-level security rules, which can filter based on stock ID and other document properties."
+    ]
   }
 }
