@@ -3,6 +3,9 @@ import { cn } from "@/lib/utils";
 
 export function StockDetailsCard({ stock }: { stock: any }) {
   const isPositive = stock.change > 0;
+  const exchange = stock.exchange?.split(' ')[0] || '';
+  const displayExchange = exchange.includes('NSE') ? 'NSE' : exchange.includes('BSE') ? 'BSE' : exchange;
+  
   return (
     <Card>
       <CardHeader>
@@ -34,7 +37,7 @@ export function StockDetailsCard({ stock }: { stock: any }) {
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-sm text-muted-foreground">Exchange</p>
-          <p className="text-2xl font-bold">{stock.exchange.split(' ')[0]}</p>
+          <p className="text-2xl font-bold">{displayExchange}</p>
         </div>
       </CardContent>
     </Card>

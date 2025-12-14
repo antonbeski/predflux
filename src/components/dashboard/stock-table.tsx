@@ -53,7 +53,7 @@ export function StockTable({ stocks }: { stocks: Stock[] }) {
               className="cursor-pointer"
             >
               <TableCell>
-                <div className="font-medium">{stock.ticker}</div>
+                <div className="font-medium">{stock.ticker.replace(/\.NS$|\.BO$/, '')}</div>
                 <div className="text-xs text-muted-foreground">{stock.exchange}</div>
               </TableCell>
               <TableCell className="hidden sm:table-cell">{stock.name}</TableCell>

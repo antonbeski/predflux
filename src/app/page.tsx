@@ -7,10 +7,43 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useState, useEffect } from "react";
 import { useWatchlist } from "@/hooks/use-watchlist";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getQuote } from "@/lib/finnhub/finnhub-actions";
+import type { Stock } from "@/lib/types";
+
+// Top 5 companies by market cap on NSE for demonstration
+const popularStocks = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS"];
+
+async function getStockData(ticker: string): Promise<Stock | null> {
+  try {
+    const quote = await getQuote(ticker);
+    // This is a simplified recommendation logic for the dashboard
+    const recommendation = quote.dp > 0.5 ? "Buy" : quote.dp < -0.5 ? "Sell" : "Hold";
+    const reason = quote.dp > 0.5 ? "Strong upward momentum." : quote.dp < -0.5 ? "Significant downward trend." : "Stable, holding pattern.";
+    
+    return {
+      ticker: ticker,
+      name: ticker.split('.')[0], // Placeholder name
+      exchange: ticker.endsWith('.NS') ? 'NSE' : 'BSE',
+      price: quote.c,
+      change: quote.d,
+      changePercent: quote.dp,
+      recommendation: recommendation,
+      reason: reason,
+    };
+  } catch (error) {
+    console.error(`Failed to fetch data for ${ticker}`, error);
+    return null;
+  }
+}
+
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState('');
-  const { watchlist, isLoading } = useWatchlist();
+  const { watchlist: watchlistItems, isLoading } = useWatchlist();
+  const [watchlistStocks, setWatchlistStocks] = useState<Stock[]>([]);
+  const [recommendationStocks, setRecommendationStocks] = useState<Stock[]>([]);
+  const [isWatchlistLoading, setIsWatchlistLoading] = useState(true);
+  const [isRecsLoading, setIsRecsLoading] = useState(true);
 
   useEffect(() => {
     setCurrentDate(new Date().toLocaleDateString(undefined, {
@@ -18,11 +51,36 @@ export default function Home() {
       month: 'long',
       day: 'numeric',
     }));
+
+    // Fetch popular stocks for daily recommendations
+    const fetchRecs = async () => {
+      setIsRecsLoading(true);
+      const stockData = await Promise.all(popularStocks.map(ticker => getStockData(ticker)));
+      setRecommendationStocks(stockData.filter((s): s is Stock => s !== null));
+      setIsRecsLoading(false);
+    }
+    fetchRecs();
+
   }, []);
 
-  // For now, we are creating a "watchlist" from the daily recommendations for demonstration
-  // TODO: Replace with actual watchlist data
-  const watchlistStocks = dailyRecommendations.filter(stock => watchlist?.some(w => w.symbol === stock.ticker));
+  useEffect(() => {
+    // Fetch data for stocks in the watchlist
+    const fetchWatchlistData = async () => {
+      if (isLoading || !watchlistItems) return;
+      
+      setIsWatchlistLoading(true);
+      if (watchlistItems.length > 0) {
+        const watchlistTickers = watchlistItems.map(w => w.symbol);
+        const stockData = await Promise.all(watchlistTickers.map(ticker => getStockData(ticker)));
+        setWatchlistStocks(stockData.filter((s): s is Stock => s !== null));
+      } else {
+        setWatchlistStocks([]);
+      }
+      setIsWatchlistLoading(false);
+    };
+
+    fetchWatchlistData();
+  }, [watchlistItems, isLoading]);
 
 
   return (
@@ -44,11 +102,15 @@ export default function Home() {
             <CardHeader>
               <CardTitle>Daily Market Pulse</CardTitle>
               <CardDescription>
-                {currentDate ? `AI-powered recommendations generated on ${currentDate}.` : 'Loading...'}
+                {currentDate ? `Popular stocks on ${currentDate}.` : 'Loading...'}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <StockTable stocks={dailyRecommendations} />
+              {isRecsLoading ? (
+                <p>Loading recommendations...</p>
+              ) : (
+                <StockTable stocks={recommendationStocks} />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -61,12 +123,12 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isWatchlistLoading || isLoading ? (
                 <p>Loading watchlist...</p>
               ) : watchlistStocks.length > 0 ? (
                 <StockTable stocks={watchlistStocks} />
               ) : (
-                <p className="text-center text-muted-foreground">Your watchlist is empty.</p>
+                <p className="text-center text-muted-foreground">Your watchlist is empty. Search for a stock to add it.</p>
               )}
             </CardContent>
           </Card>
