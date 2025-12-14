@@ -5,7 +5,8 @@ import type { NewsItem } from '@/lib/types';
 
 async function getNews() {
   const newsData = await getMarketNews('general');
-  const formattedNews: NewsItem[] = newsData.slice(0, 50).map((item: any) => ({
+  // Return only the first 10 for the initial load. More will be loaded via infinite scroll.
+  const formattedNews: NewsItem[] = newsData.slice(0, 10).map((item: any) => ({
     title: item.headline,
     url: item.url,
     source: item.source,

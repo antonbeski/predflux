@@ -2,7 +2,6 @@
 'use client';
 
 import { StockTable } from "@/components/dashboard/stock-table";
-import { dailyRecommendations } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { useWatchlist } from "@/hooks/use-watchlist";
@@ -16,6 +15,7 @@ const popularStocks = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICI
 async function getStockData(ticker: string): Promise<Stock | null> {
   try {
     const quote = await getQuote(ticker);
+    if (!quote || typeof quote.c === 'undefined') return null;
     // This is a simplified recommendation logic for the dashboard
     const recommendation = quote.dp > 0.5 ? "Buy" : quote.dp < -0.5 ? "Sell" : "Hold";
     const reason = quote.dp > 0.5 ? "Strong upward momentum." : quote.dp < -0.5 ? "Significant downward trend." : "Stable, holding pattern.";

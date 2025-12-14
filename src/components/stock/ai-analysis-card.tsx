@@ -18,7 +18,7 @@ export function AiAnalysisCard({ analysis }: { analysis: AnalyzeStockDataAndGene
         <CardTitle className="flex items-center gap-2">
             AI Analysis
         </CardTitle>
-        <CardDescription>Gemini 2.5 Flash Recommendation</CardDescription>
+        <CardDescription>Gemini 2.5 Flash Analysis</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex justify-between items-center">
