@@ -25,22 +25,7 @@ import { useUser, useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
-
-const Logo = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-8 w-8 text-primary"
-  >
-    <path d="M3 17l6-6 4 4 8-8" />
-    <path d="M17 7h4v4" />
-  </svg>
-);
+import Image from "next/image";
 
 const NavLink = ({ href, children, isActive, isMobile = false }: { href: string; children: React.ReactNode; isActive: boolean; isMobile?: boolean }) => (
   <Link
@@ -173,7 +158,7 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <Link href="/" className="flex items-center gap-2 mr-6">
-        <Logo />
+        <Image src="/logo.png" alt="PREDFLUX Logo" width={32} height={32} />
         <h1 className="text-xl font-semibold font-headline hidden md:block">PREDFLUX</h1>
       </Link>
 
@@ -253,7 +238,7 @@ export function AppHeader() {
           </SheetTrigger>
           <SheetContent side="right">
              <Link href="/" className="flex items-center gap-2 mb-6">
-              <Logo />
+              <Image src="/logo.png" alt="PREDFLUX Logo" width={32} height={32} />
               <h1 className="text-xl font-semibold font-headline">PREDFLUX</h1>
             </Link>
             <div className="flex flex-col h-full">
