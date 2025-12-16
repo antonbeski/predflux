@@ -58,3 +58,19 @@
     min-height: 100vh;
   }
 }
+
+@layer utilities {
+  .loader {
+    width: 40px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 6px solid;
+    border-color: hsl(var(--primary)) #0000;
+    animation: l1 1s infinite;
+  }
+  @keyframes l1 {to{transform: rotate(.5turn)}}
+
+  .dark .loader {
+    border-color: hsl(var(--primary)) #0000;
+  }
+}

@@ -11,7 +11,6 @@ import {
 import {
   Menu,
   Search,
-  Loader2,
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { Input } from "../ui/input";
@@ -57,7 +56,11 @@ const UserNav = ({ isMobile = false }: { isMobile?: boolean }) => {
     };
 
     if (isUserLoading) {
-        return <Loader2 className="h-5 w-5 animate-spin" />;
+      return (
+        <div className="flex items-center justify-center w-full">
+            <div className="loader" style={{width: '24px', height: '24px', borderWidth: '4px' }}></div>
+        </div>
+      );
     }
 
     if (!user) {
@@ -116,21 +119,18 @@ export function AppHeader() {
       setLoading(false);
       return;
     }
+    
+    setPopoverOpen(true);
 
     const performSearch = async () => {
       setLoading(true);
       try {
         const response = await searchStocks({ query });
-        setResults(response.results || []);
-        if (response.results && response.results.length > 0) {
-          setPopoverOpen(true);
-        } else {
-          setPopoverOpen(false);
-        }
+        const validResults = response.results?.filter(stock => stock.ticker) || [];
+        setResults(validResults);
       } catch (error) {
         console.error("Search failed:", error);
         setResults([]);
-        setPopoverOpen(false);
       } finally {
         setLoading(false);
       }
@@ -186,9 +186,8 @@ export function AppHeader() {
                     className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => query && results.length > 0 && setPopoverOpen(true)}
+                    onFocus={() => query.trim() && setPopoverOpen(true)}
                   />
-                  {loading && <Loader2 className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground animate-spin" />}
                 </div>
               </form>
             </PopoverTrigger>
@@ -196,7 +195,11 @@ export function AppHeader() {
               className="w-[--radix-popover-trigger-width] p-0"
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
-                {results.length > 0 ? (
+                {loading ? (
+                  <div className="flex justify-center items-center p-8">
+                    <div className="loader"></div>
+                  </div>
+                ) : results.length > 0 ? (
                   <ul className="max-h-96 overflow-y-auto">
                     {results.slice(0, 10).map((stock) => (
                        <li 
@@ -215,15 +218,11 @@ export function AppHeader() {
                   </ul>
                 ) : (
                   <div className="p-4 text-center text-sm text-muted-foreground">
-                    No results found.
+                    No results found for &quot;{query}&quot;.
                   </div>
                 )}
             </PopoverContent>
           </Popover>
-        </div>
-        <div className="hidden md:flex items-center gap-2">
-            <ThemeToggle />
-            <UserNav />
         </div>
         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
@@ -252,11 +251,16 @@ export function AppHeader() {
                   <span className="text-lg">Switch Theme</span>
                   <ThemeToggle />
                 </div>
+                <Separator />
                 <UserNav isMobile={true} />
               </div>
             </div>
           </SheetContent>
         </Sheet>
+        <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
+            <UserNav />
+        </div>
       </div>
     </header>
   );
