@@ -17,7 +17,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { searchStocks } from "@/ai/flows/search-stocks";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useUser, useAuth } from "@/firebase";
@@ -105,8 +105,9 @@ export function AppHeader() {
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<SearchResult[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [isPopoverOpen, setPopoverOpen] = React.useState(false);
+  const [isSearchOpen, setSearchOpen] = React.useState(false);
   const [isSheetOpen, setSheetOpen] = React.useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const isActive = (path: string, exact = false) => {
     return exact ? pathname === path : pathname.startsWith(path);
@@ -115,18 +116,15 @@ export function AppHeader() {
   React.useEffect(() => {
     if (!query.trim()) {
       setResults([]);
-      setPopoverOpen(false);
       setLoading(false);
       return;
     }
-    
-    setPopoverOpen(true);
 
     const performSearch = async () => {
       setLoading(true);
       try {
         const response = await searchStocks({ query });
-        const validResults = response.results?.filter(stock => stock.ticker) || [];
+        const validResults = response.results?.filter(stock => stock && stock.ticker) || [];
         setResults(validResults);
       } catch (error) {
         console.error("Search failed:", error);
@@ -144,7 +142,7 @@ export function AppHeader() {
     router.push(`/stock/${encodeURIComponent(symbol)}`);
     setQuery("");
     setResults([]);
-    setPopoverOpen(false);
+    setSearchOpen(false);
     setSheetOpen(false); // Close mobile sheet on navigation
   };
   
@@ -154,6 +152,14 @@ export function AppHeader() {
       <NavLink href="/news" isActive={isActive("/news")}>News</NavLink>
     </>
   );
+
+  const handleSearchOpen = (open: boolean) => {
+    setSearchOpen(open);
+    if (!open) {
+      setQuery('');
+      setResults([]);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
@@ -168,61 +174,72 @@ export function AppHeader() {
 
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
         <div className="ml-auto flex-1 sm:flex-initial">
-          <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger asChild>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                if(results.length > 0) {
-                  handleSelect(results[0].ticker);
-                } else if(query) {
-                  handleSelect(query.toUpperCase());
-                }
-              }}>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search..."
-                    className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-full"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => query.trim() && setPopoverOpen(true)}
-                  />
-                </div>
-              </form>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="w-[--radix-popover-trigger-width] p-0"
-              onOpenAutoFocus={(e) => e.preventDefault()}
-            >
-                {loading ? (
-                  <div className="flex justify-center items-center p-8">
-                    <div className="loader"></div>
-                  </div>
-                ) : results.length > 0 ? (
-                  <ul className="max-h-96 overflow-y-auto">
-                    {results.slice(0, 10).map((stock) => (
-                       <li 
-                         key={`${stock.ticker}-${stock.name}`}
-                         className="p-4 border-b last:border-b-0 hover:bg-accent cursor-pointer"
-                         onClick={() => handleSelect(stock.ticker)}
-                       >
-                         <div className="flex justify-between items-center">
-                           <div>
-                             <p className="font-semibold">{stock.ticker}</p>
-                             <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
-                           </div>
-                         </div>
-                       </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    No results found for &quot;{query}&quot;.
-                  </div>
-                )}
-            </PopoverContent>
-          </Popover>
+            <Button variant="outline" className="w-full justify-start text-muted-foreground" onClick={() => handleSearchOpen(true)}>
+                <Search className="mr-2 h-4 w-4" />
+                <span className="w-full text-left">Search...</span>
+            </Button>
+            <Dialog open={isSearchOpen} onOpenChange={handleSearchOpen}>
+                <DialogContent className="sm:max-w-xl p-0" onOpenAutoFocus={(e) => {
+                  e.preventDefault();
+                  searchInputRef.current?.focus();
+                }}>
+                    <DialogHeader className="p-6 pb-0">
+                        <DialogTitle>Search Stocks</DialogTitle>
+                         <form onSubmit={(e) => {
+                            e.preventDefault();
+                            if(results.length > 0) {
+                              handleSelect(results[0].ticker);
+                            } else if(query) {
+                              handleSelect(query.toUpperCase());
+                            }
+                          }}>
+                            <div className="relative mt-4">
+                              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                ref={searchInputRef}
+                                type="search"
+                                placeholder="Search by ticker or company name..."
+                                className="w-full appearance-none bg-background pl-8 shadow-none"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                              />
+                            </div>
+                          </form>
+                    </DialogHeader>
+                    <div className="h-96 overflow-y-auto">
+                        {loading ? (
+                          <div className="flex justify-center items-center h-full">
+                            <div className="loader"></div>
+                          </div>
+                        ) : query.trim() && results.length > 0 ? (
+                          <ul>
+                            {results.slice(0, 20).map((stock) => (
+                               <li 
+                                 key={`${stock.ticker}-${stock.name}`}
+                                 className="p-4 border-t last:border-b-0 hover:bg-accent cursor-pointer"
+                                 onClick={() => handleSelect(stock.ticker)}
+                               >
+                                 <div className="flex justify-between items-center">
+                                   <div>
+                                     <p className="font-semibold">{stock.ticker}</p>
+                                     <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
+                                   </div>
+                                 </div>
+                               </li>
+                            ))}
+                          </ul>
+                        ) : query.trim() && !loading ? (
+                          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                            No results found for &quot;{query}&quot;.
+                          </div>
+                        ) : (
+                             <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                                Start typing to search for a stock.
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
         <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
@@ -246,12 +263,11 @@ export function AppHeader() {
                   <NavLink href="/news" isActive={isActive("/news")} isMobile>News</NavLink>
               </nav>
               <Separator />
-              <div className="flex flex-col gap-4">
+              <div className="grid gap-4">
                 <div className="flex justify-between items-center">
                   <span className="text-lg">Switch Theme</span>
                   <ThemeToggle />
                 </div>
-                <Separator />
                 <UserNav isMobile={true} />
               </div>
             </div>
