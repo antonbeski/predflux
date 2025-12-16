@@ -8,7 +8,7 @@ import { useWatchlist } from "@/hooks/use-watchlist";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getQuote } from "@/lib/yfinance-actions";
 import type { Stock } from "@/lib/types";
-import { Quote } from "yahoo-finance2/dist/esm/src/modules/quote";
+import { StockTableSkeleton } from "@/components/dashboard/stock-table-skeleton";
 
 // Top 5 companies by market cap on NSE for demonstration
 const popularStocks = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS"];
@@ -112,7 +112,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               {isRecsLoading ? (
-                <p>Loading recommendations...</p>
+                <StockTableSkeleton />
               ) : (
                 <StockTable stocks={recommendationStocks} />
               )}
@@ -129,7 +129,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               {isWatchlistLoading || isLoading ? (
-                <p>Loading watchlist...</p>
+                <StockTableSkeleton />
               ) : watchlistStocks.length > 0 ? (
                 <StockTable stocks={watchlistStocks} />
               ) : (
